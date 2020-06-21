@@ -78,10 +78,9 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
     }
 
     let i = 1; // TODO: Why 1 and not 0, I have to check
-    const branches: (string | null)[] = ['index'];
+    const branches = new Array<string | null>();
     const activeNodes = new Map<string, Set<number>>();
     const activeNodesQueue = new FastPriorityQueue<[number, string]>((lhs, rhs) => lhs[0] < rhs[0]);
-    activeNodes.set('index', new Set<number>());
     for (let commit of commits) {
       let j = -1;
       const commitChildren = children.get(commit.hash)!;

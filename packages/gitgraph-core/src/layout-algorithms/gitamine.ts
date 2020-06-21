@@ -18,7 +18,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
   }
 
   protected computeChildren(commits: Array<Commit<TNode>>): Map<Commit["hash"], Array<Commit<TNode>>> {
-    let children = new Map<Commit["hash"], Array<Commit<TNode>>>();
+    const children = new Map<Commit["hash"], Array<Commit<TNode>>>();
     commits.forEach((commit) => {
       children.set(commit.hash, new Array<Commit<TNode>>());
     });
@@ -81,15 +81,15 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
     const branches = new Array<string | null>();
     const activeNodes = new Map<string, Set<number>>();
     const activeNodesQueue = new FastPriorityQueue<[number, string]>((lhs, rhs) => lhs[0] < rhs[0]);
-    for (let commit of commits) {
+    for (const commit of commits) {
       let j = -1;
       const commitChildren = children.get(commit.hash)!;
       const branchChildren = commitChildren.filter((child) => child.parents[0] === commit.hash);
       const mergeChildren = commitChildren.filter((child) => child.parents[0] !== commit.hash);
       // Compute forbidden indices
-      let highestChild: Commit<TNode> | undefined = undefined;
+      let highestChild: Commit<TNode> | undefined;
       let iMin = Infinity;
-      for (let child of mergeChildren) {
+      for (const child of mergeChildren) {
         const iChild = this.rows.get(child.hash)!;
         if (iChild < iMin) {
           iMin = iChild;
@@ -101,7 +101,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       let commitToReplace: Commit<TNode> | null = null;
       let jCommitToReplace = Infinity;
       // The commit can only replace a child whose first parent is this commit
-      for (let child of branchChildren) {
+      for (const child of branchChildren) {
         const jChild = this.cols.get(child.hash)!;
         if (!forbiddenIndices.has(jChild) && jChild < jCommitToReplace) {
           commitToReplace = child;
@@ -131,15 +131,15 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       }
       // Upddate the active nodes
       const jToAdd = [j, ...branchChildren.map((child) => this.cols.get(child.hash)!)];
-      for (let activeNode of activeNodes.values()) {
-        jToAdd.forEach((j) => activeNode.add(j));
+      for (const activeNode of activeNodes.values()) {
+        jToAdd.forEach((newJ) => activeNode.add(newJ));
       }
       activeNodes.set(commit.hash, new Set<number>());
       const iRemove = Math.max(...commit.parents.map((parentHash) => this.rows.get(parentHash)!));
       activeNodesQueue.add([iRemove, commit.hash]);
       // Remove children from active branches
-      for (let child of branchChildren) {
-        if (child != commitToReplace) {
+      for (const child of branchChildren) {
+        if (child !== commitToReplace) {
           branches[this.cols.get(child.hash)!] = null;
         }
       }

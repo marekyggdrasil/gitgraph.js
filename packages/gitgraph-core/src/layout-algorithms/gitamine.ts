@@ -77,12 +77,10 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       return branches.length - 1;
     }
 
-    let i = 1; // TODO: Why 1 and not 0, I have to check
     const branches = new Array<string | null>();
     const activeNodes = new Map<string, Set<number>>();
     const activeNodesQueue = new FastPriorityQueue<[number, string]>((lhs, rhs) => lhs[0] < rhs[0]);
-    for (const commit of commits) {
-      let j = -1;
+    commits.forEach((commit, i) => {
       const commitChildren = children.get(commit.hash)!;
       const branchChildren = commitChildren.filter((child) => child.parents[0] === commit.hash);
       const mergeChildren = commitChildren.filter((child) => child.parents[0] !== commit.hash);
@@ -109,6 +107,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
         }
       }
       // Insert the commit in the active branches
+      let j = -1;
       if (commitToReplace) {
         j = jCommitToReplace;
         branches[j] = commit.hash;
@@ -149,7 +148,6 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       }
       // Finally set the position
       this.cols.set(commit.hash, j);
-      ++i;
-    }
+    });
   }
 }

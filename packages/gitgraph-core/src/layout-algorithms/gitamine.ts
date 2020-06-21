@@ -92,7 +92,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       for (let child of mergeChildren) {
         const iChild = this.rows.get(child.hash)!;
         if (iChild < iMin) {
-          iMin = i;
+          iMin = iChild;
           highestChild = child;
         }
       }

@@ -1,11 +1,10 @@
 import { Commit } from "../commit";
 import { Layout } from "../layout"
-
-import { DefaultRendering } from "./default";
+import { LayoutPolicy } from "../layout-policy"
 
 export { CompactRendering };
 
-class CompactRendering<TNode> extends DefaultRendering<TNode> {
+class CompactRendering<TNode> extends LayoutPolicy<TNode> {
   protected computePositions(commits: Array<Commit<TNode>>, layout: Layout): void {
     commits.forEach((commit, i) => {
       // columns

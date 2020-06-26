@@ -1,12 +1,12 @@
 import { Commit } from "../commit";
 import { Layout } from "../layout"
-import FastPriorityQueue = require("fastpriorityqueue");
+import { LayoutPolicy } from "../layout-policy"
 
-import { DefaultRendering } from "./default";
+import FastPriorityQueue = require("fastpriorityqueue");
 
 export { GitamineRendering };
 
-class GitamineRendering<TNode> extends DefaultRendering<TNode> {
+class GitamineRendering<TNode> extends LayoutPolicy<TNode> {
   protected computePositions(commits: Array<Commit<TNode>>, layout: Layout): void {
     const children = this.computeChildren(commits);
     const sortedCommits = this.sortCommits(commits, children);

@@ -17,7 +17,7 @@ import { Refs } from "./refs";
 import { BranchesPathsCalculator, BranchesPaths } from "./branches-paths";
 import { booleanOptionOr, numberOptionOr } from "./utils";
 import { Orientation } from "./orientation";
-import { Layout } from "./layout";
+import { LayoutType } from "./layout-type";
 import {
   GitgraphUserApi,
   GitgraphBranchOptions,
@@ -29,7 +29,7 @@ export { GitgraphOptions, RenderedData, GitgraphCore };
 interface GitgraphOptions {
   template?: TemplateName | Template;
   orientation?: Orientation;
-  layout?: Layout;
+  layout?: LayoutType;
   reverseArrow?: boolean;
   initCommitOffsetX?: number;
   initCommitOffsetY?: number;
@@ -49,7 +49,7 @@ interface RenderedData<TNode> {
 
 class GitgraphCore<TNode = SVGElement> {
   public orientation?: Orientation;
-  public layout?: Layout;
+  public layout?: LayoutType;
   public get isHorizontal(): boolean {
     return (
       this.orientation === Orientation.Horizontal ||
@@ -65,11 +65,11 @@ class GitgraphCore<TNode = SVGElement> {
       this.orientation === Orientation.VerticalReverse
     );
   }
-  public get getLayout(): Layout {
+  public get getLayout(): LayoutType {
     if (this.layout) {
       return this.layout;
     }
-    return Layout.Default;
+    return LayoutType.Default;
   }
   public get shouldDisplayCommitMessage(): boolean {
     return !this.isHorizontal && this.mode !== Mode.Compact;
@@ -126,7 +126,7 @@ class GitgraphCore<TNode = SVGElement> {
       options.branchLabelOnEveryCommit,
       false,
     );
-    this.layout = options.layout || Layout.Default;
+    this.layout = options.layout || LayoutType.Default;
   }
 
   /**
@@ -439,7 +439,7 @@ class GitgraphCore<TNode = SVGElement> {
   private ComputeLayout(
     commitsWithBranches: Array<Commit<TNode>>,
   ): DefaultRendering<TNode> {
-    if (this.layout == Layout.Gitamine) {
+    if (this.layout == LayoutType.Gitamine) {
       return new GitamineRendering<TNode>(
         commitsWithBranches,
         this.template.colors,

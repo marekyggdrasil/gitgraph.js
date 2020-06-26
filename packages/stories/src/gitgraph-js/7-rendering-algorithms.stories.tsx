@@ -4,7 +4,7 @@ import {
   createGitgraph,
   TemplateName,
   templateExtend,
-  Layout,
+  LayoutType,
 } from "@gitgraph/js";
 
 import { createFixedHashGenerator, GraphContainer } from "../helpers";
@@ -19,7 +19,7 @@ storiesOf("gitgraph-js/7. Rendering algorithms", module)
       {(graphContainer) => {
         const gitgraph = createGitgraph(graphContainer, {
           generateCommitHash: createFixedHashGenerator(),
-          layout: Layout.Default,
+          layout: LayoutType.Default,
           template: noLabels,
         });
 
@@ -37,7 +37,7 @@ storiesOf("gitgraph-js/7. Rendering algorithms", module)
       {(graphContainer) => {
         const gitgraph = createGitgraph(graphContainer, {
           generateCommitHash: createFixedHashGenerator(),
-          layout: Layout.Gitamine,
+          layout: LayoutType.Gitamine,
           template: noLabels,
         });
 

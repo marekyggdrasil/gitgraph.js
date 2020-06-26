@@ -1,4 +1,5 @@
 import { Commit } from "../commit";
+import { Layout } from "../layout"
 import FastPriorityQueue = require("fastpriorityqueue");
 
 import { DefaultRendering } from "./default";
@@ -6,15 +7,15 @@ import { DefaultRendering } from "./default";
 export { GitamineRendering };
 
 class GitamineRendering<TNode> extends DefaultRendering<TNode> {
-  protected computePositions(commits: Array<Commit<TNode>>): void {
+  protected computePositions(commits: Array<Commit<TNode>>, layout: Layout): void {
     const children = this.computeChildren(commits);
     const sortedCommits = this.sortCommits(commits, children);
     // rows
     sortedCommits.forEach((commit, i) => {
-      this.rows.set(commit.hash, i);
+      layout.rows.set(commit.hash, i);
     });
     // columns
-    this.computeColumns(sortedCommits, children);
+    this.computeColumns(sortedCommits, children, layout);
   }
 
   protected computeChildren(commits: Array<Commit<TNode>>): Map<Commit["hash"], Array<Commit<TNode>>> {
@@ -57,7 +58,8 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
   }
 
   protected computeColumns(commits: Array<Commit<TNode>>,
-      children: Map<Commit["hash"], Array<Commit<TNode>>>): void {
+      children: Map<Commit["hash"], Array<Commit<TNode>>>,
+      layout: Layout): void {
     function insertCommit(commitHash: string, j: number, forbiddenIndices: Set<number>) {
       // Try to insert as close as possible to i
       // replace i by j
@@ -88,7 +90,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       let highestChild: Commit<TNode> | undefined;
       let iMin = Infinity;
       for (const child of mergeChildren) {
-        const iChild = this.rows.get(child.hash)!;
+        const iChild = layout.rows.get(child.hash)!;
         if (iChild < iMin) {
           iMin = iChild;
           highestChild = child;
@@ -100,7 +102,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       let jCommitToReplace = Infinity;
       // The commit can only replace a child whose first parent is this commit
       for (const child of branchChildren) {
-        const jChild = this.cols.get(child.hash)!;
+        const jChild = layout.cols.get(child.hash)!;
         if (!forbiddenIndices.has(jChild) && jChild < jCommitToReplace) {
           commitToReplace = child;
           jCommitToReplace = jChild;
@@ -114,7 +116,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
       } else {
         if (commitChildren.length > 0) {
           const child = commitChildren[0];
-          const jChild = this.cols.get(child.hash)!;
+          const jChild = layout.cols.get(child.hash)!;
           // Try to insert near a child
           // We could try to insert near any child instead of arbitrarily chosing the first one
           j = insertCommit(commit.hash, jChild, forbiddenIndices);
@@ -129,17 +131,17 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
         activeNodes.delete(hash);
       }
       // Upddate the active nodes
-      const jToAdd = [j, ...branchChildren.map((child) => this.cols.get(child.hash)!)];
+      const jToAdd = [j, ...branchChildren.map((child) => layout.cols.get(child.hash)!)];
       for (const activeNode of activeNodes.values()) {
         jToAdd.forEach((newJ) => activeNode.add(newJ));
       }
       activeNodes.set(commit.hash, new Set<number>());
-      const iRemove = Math.max(...commit.parents.map((parentHash) => this.rows.get(parentHash)!));
+      const iRemove = Math.max(...commit.parents.map((parentHash) => layout.rows.get(parentHash)!));
       activeNodesQueue.add([iRemove, commit.hash]);
       // Remove children from active branches
       for (const child of branchChildren) {
         if (child !== commitToReplace) {
-          branches[this.cols.get(child.hash)!] = null;
+          branches[layout.cols.get(child.hash)!] = null;
         }
       }
       // If the commit has no parent, remove it from active branches
@@ -147,7 +149,7 @@ class GitamineRendering<TNode> extends DefaultRendering<TNode> {
         branches[j] = null;
       }
       // Finally set the position
-      this.cols.set(commit.hash, j);
+      layout.cols.set(commit.hash, j);
     });
   }
 }

@@ -2,6 +2,7 @@ import { Branch, DELETED_BRANCH_NAME, createDeletedBranch } from "./branch";
 import { Commit } from "./commit";
 import { Mode } from "./mode";
 import { CompareBranchesOrder } from "./branches-order";
+import { Layout } from "./layout";
 
 import { DefaultRendering } from "./layout-algorithms/default";
 import { CompactRendering } from "./layout-algorithms/compact";
@@ -366,7 +367,7 @@ class GitgraphCore<TNode = SVGElement> {
    * @param commit Commit to position
    */
   private withPosition(
-    renderedLayout: DefaultRendering<TNode>,
+    renderedLayout: Layout,
     commit: Commit<TNode>,
   ): Commit<TNode> {
     const row = renderedLayout.getRowOf(commit.hash);
@@ -412,7 +413,7 @@ class GitgraphCore<TNode = SVGElement> {
    * @param branchName Name of the branch
    */
   private getBranchDefaultColor(
-    renderedLayout: DefaultRendering<TNode>,
+    renderedLayout: Layout,
     branchName: Branch["name"],
   ): string {
     return renderedLayout.getColorOf(branchName);
@@ -438,25 +439,28 @@ class GitgraphCore<TNode = SVGElement> {
    */
   private ComputeLayout(
     commitsWithBranches: Array<Commit<TNode>>,
-  ): DefaultRendering<TNode> {
+  ): Layout {
     if (this.layout == LayoutType.Gitamine) {
-      return new GitamineRendering<TNode>(
-        commitsWithBranches,
-        this.template.colors,
-        this.branchesOrderFunction,
-      );
+      return new GitamineRendering<TNode>()
+        .computeLayoutFromCommits(
+          commitsWithBranches,
+          this.template.colors,
+          this.branchesOrderFunction
+        );
     }
     if (this.mode == Mode.Compact) {
-      return new CompactRendering<TNode>(
+      return new CompactRendering<TNode>()
+        .computeLayoutFromCommits(
+          commitsWithBranches,
+          this.template.colors,
+          this.branchesOrderFunction
+        );
+    }
+    return new DefaultRendering<TNode>()
+      .computeLayoutFromCommits(
         commitsWithBranches,
         this.template.colors,
-        this.branchesOrderFunction,
+        this.branchesOrderFunction
       );
-    }
-    return new DefaultRendering<TNode>(
-      commitsWithBranches,
-      this.template.colors,
-      this.branchesOrderFunction,
-    );
   }
 }

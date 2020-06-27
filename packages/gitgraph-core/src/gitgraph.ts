@@ -156,11 +156,11 @@ class GitgraphCore<TNode = SVGElement> {
    * Rendering libraries will use this to implement their rendering strategy.
    */
   public getRenderedData(): RenderedData<TNode> {
-    const commits = this.computeRenderedCommits();
+    const [commits, layout] = this.computeRenderedCommits();
     const branchesPaths = this.computeRenderedBranchesPaths(commits);
     const commitMessagesX = this.computeCommitMessagesX(branchesPaths);
 
-    this.computeBranchesColor(commits, branchesPaths);
+    this.computeBranchesColor(commits, layout, branchesPaths);
 
     return { commits, branchesPaths, commitMessagesX };
   }
@@ -223,15 +223,18 @@ class GitgraphCore<TNode = SVGElement> {
   /**
    * Return commits with data for rendering.
    */
-  private computeRenderedCommits(): Array<Commit<TNode>> {
+  private computeRenderedCommits(): [Array<Commit<TNode>>, Layout] {
     const branches = this.getBranches();
     const commitsWithBranches = this.commits.map((commit) =>
       this.withBranches(branches, commit),
     );
+    const layout = this.policy.computeLayoutFromCommits(
+      commitsWithBranches,
+      this.template.colors,
+      this.branchesOrderFunction
+    );
 
-    const layout = this.ComputeLayout(commitsWithBranches);
-
-    return (
+    return [
       commitsWithBranches
         .map((commit) => commit.setRefs(this.refs))
         .map((commit) => this.withPosition(layout, commit))
@@ -249,8 +252,9 @@ class GitgraphCore<TNode = SVGElement> {
               Object.assign({}, this.tagStyles[name], this.template.tag),
             (name) => this.tagRenders[name],
           ),
-        )
-    );
+        ),
+        layout
+    ];
   }
 
   /**
@@ -279,9 +283,9 @@ class GitgraphCore<TNode = SVGElement> {
    */
   private computeBranchesColor(
     commits: Array<Commit<TNode>>,
+    layout: Layout,
     branchesPaths: BranchesPaths<TNode>,
   ): void {
-    const layout = this.ComputeLayout(commits);
     Array.from(branchesPaths).forEach(([branch]) => {
       branch.computedColor =
         branch.style.color ||
@@ -425,18 +429,5 @@ class GitgraphCore<TNode = SVGElement> {
     this.nextTimeoutId = window.setTimeout(() => {
       this.listeners.forEach((listener) => listener(this.getRenderedData()));
     }, 0);
-  }
-
-  /**
-   * Return applies appropriate rendering algorithm depending on the options
-   */
-  private ComputeLayout(
-    commitsWithBranches: Array<Commit<TNode>>,
-  ): Layout {
-    return this.policy.computeLayoutFromCommits(
-      commitsWithBranches,
-      this.template.colors,
-      this.branchesOrderFunction
-    );
   }
 }

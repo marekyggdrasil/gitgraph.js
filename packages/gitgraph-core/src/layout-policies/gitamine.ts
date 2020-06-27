@@ -4,9 +4,9 @@ import { LayoutPolicy } from "../layout-policy"
 
 import FastPriorityQueue = require("fastpriorityqueue");
 
-export { GitamineRendering };
+export { GitaminePolicy };
 
-class GitamineRendering extends LayoutPolicy {
+class GitaminePolicy extends LayoutPolicy {
   protected computePositions<TNode>(commits: Array<Commit<TNode>>, layout: Layout): void {
     const children = this.computeChildren(commits);
     const sortedCommits = this.sortCommits(commits, children);

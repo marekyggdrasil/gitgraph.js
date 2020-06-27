@@ -3,8 +3,8 @@ import { Commit } from "./commit";
 import { Mode } from "./mode";
 import { CompareBranchesOrder } from "./branches-order";
 import { Layout } from "./layout";
-import { CompactRendering } from "./layout-algorithms/compact";
-import { DefaultRendering } from "./layout-algorithms/default";
+import { CompactPolicy } from "./layout-policies/compact";
+import { DefaultPolicy } from "./layout-policies/default";
 import { LayoutPolicy } from "./layout-policy";
 
 import {
@@ -120,7 +120,7 @@ class GitgraphCore<TNode = SVGElement> {
       false,
     );
     this.layout = options.layout ||
-      (this.mode === Mode.Compact ? new CompactRendering() : new DefaultRendering());
+      (this.mode === Mode.Compact ? new CompactPolicy() : new DefaultPolicy());
   }
 
   /**

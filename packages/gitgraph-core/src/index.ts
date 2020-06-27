@@ -1,8 +1,8 @@
 export { GitgraphCore, GitgraphOptions, RenderedData } from "./gitgraph";
 export { Mode } from "./mode";
-export { CompactRendering } from "./layout-algorithms/compact";
-export { DefaultRendering } from "./layout-algorithms/default";
-export { GitamineRendering } from "./layout-algorithms/gitamine";
+export { CompactPolicy } from "./layout-policies/compact";
+export { DefaultPolicy } from "./layout-policies/default";
+export { GitaminePolicy } from "./layout-policies/gitamine";
 export {
   GitgraphUserApi,
   GitgraphCommitOptions,

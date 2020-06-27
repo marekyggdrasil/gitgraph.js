@@ -6,18 +6,18 @@ describe("Gitgraph Layout", () => {
   it("should tell it's default layout if not set", () => {
     const gitgraph = new GitgraphCore();
 
-    expect(gitgraph.layout).toBeInstanceOf(DefaultPolicy);
+    expect(gitgraph.policy).toBeInstanceOf(DefaultPolicy);
   });
 
   it("should not re-use any columns for default layout", () => {
     const core = new GitgraphCore({
-      layout: new DefaultPolicy(),
+      policy: new DefaultPolicy(),
     });
   });
 
   it("should not recognize the Gitamine layout is set", () => {
     const core = new GitgraphCore({
-      layout: new GitaminePolicy(),
+      policy: new GitaminePolicy(),
     });
   });
 });

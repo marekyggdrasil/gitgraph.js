@@ -1,6 +1,5 @@
 export { GitgraphCore, GitgraphOptions, RenderedData } from "./gitgraph";
 export { Mode } from "./mode";
-export { LayoutType as LayoutType } from "./layout-type";
 export { CompactRendering } from "./layout-algorithms/compact";
 export { DefaultRendering } from "./layout-algorithms/default";
 export { GitamineRendering } from "./layout-algorithms/gitamine";

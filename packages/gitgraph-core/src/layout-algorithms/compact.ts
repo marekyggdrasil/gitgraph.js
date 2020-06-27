@@ -4,8 +4,8 @@ import { LayoutPolicy } from "../layout-policy"
 
 export { CompactRendering };
 
-class CompactRendering<TNode> extends LayoutPolicy<TNode> {
-  protected computePositions(commits: Array<Commit<TNode>>, layout: Layout): void {
+class CompactRendering extends LayoutPolicy {
+  protected computePositions<TNode>(commits: Array<Commit<TNode>>, layout: Layout): void {
     commits.forEach((commit, i) => {
       // columns
       const col = Array.from(layout.branches).findIndex(

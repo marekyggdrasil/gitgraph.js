@@ -4,8 +4,8 @@ import { Color, Layout } from "./layout"
 
 export { LayoutPolicy };
 
-abstract class LayoutPolicy<TNode> {
-  public computeLayoutFromCommits(
+abstract class LayoutPolicy {
+  public computeLayoutFromCommits<TNode>(
     commits: Array<Commit<TNode>>,
     colors: Color[],
     compareFunction: CompareBranchesOrder | undefined,
@@ -23,5 +23,5 @@ abstract class LayoutPolicy<TNode> {
     return layout;
   }
 
-  protected abstract computePositions(commits: Array<Commit<TNode>>, layout: Layout): void;
+  protected abstract computePositions<TNode>(commits: Array<Commit<TNode>>, layout: Layout): void;
 }

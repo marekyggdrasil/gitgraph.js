@@ -441,7 +441,7 @@ class GitgraphCore<TNode = SVGElement> {
     commitsWithBranches: Array<Commit<TNode>>,
   ): Layout {
     if (this.layout == LayoutType.Gitamine) {
-      return new GitamineRendering<TNode>()
+      return new GitamineRendering()
         .computeLayoutFromCommits(
           commitsWithBranches,
           this.template.colors,
@@ -449,14 +449,14 @@ class GitgraphCore<TNode = SVGElement> {
         );
     }
     if (this.mode == Mode.Compact) {
-      return new CompactRendering<TNode>()
+      return new CompactRendering()
         .computeLayoutFromCommits(
           commitsWithBranches,
           this.template.colors,
           this.branchesOrderFunction
         );
     }
-    return new DefaultRendering<TNode>()
+    return new DefaultRendering()
       .computeLayoutFromCommits(
         commitsWithBranches,
         this.template.colors,

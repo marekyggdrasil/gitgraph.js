@@ -6,8 +6,8 @@ import FastPriorityQueue = require("fastpriorityqueue");
 
 export { GitamineRendering };
 
-class GitamineRendering<TNode> extends LayoutPolicy<TNode> {
-  protected computePositions(commits: Array<Commit<TNode>>, layout: Layout): void {
+class GitamineRendering extends LayoutPolicy {
+  protected computePositions<TNode>(commits: Array<Commit<TNode>>, layout: Layout): void {
     const children = this.computeChildren(commits);
     const sortedCommits = this.sortCommits(commits, children);
     // rows
@@ -18,7 +18,7 @@ class GitamineRendering<TNode> extends LayoutPolicy<TNode> {
     this.computeColumns(sortedCommits, children, layout);
   }
 
-  protected computeChildren(commits: Array<Commit<TNode>>): Map<Commit["hash"], Array<Commit<TNode>>> {
+  protected computeChildren<TNode>(commits: Array<Commit<TNode>>): Map<Commit["hash"], Array<Commit<TNode>>> {
     const children = new Map<Commit["hash"], Array<Commit<TNode>>>();
     commits.forEach((commit) => {
       children.set(commit.hash, new Array<Commit<TNode>>());
@@ -31,7 +31,7 @@ class GitamineRendering<TNode> extends LayoutPolicy<TNode> {
     return children;
   }
 
-  protected sortCommits(commits: Array<Commit<TNode>>,
+  protected sortCommits<TNode>(commits: Array<Commit<TNode>>,
       children: Map<Commit["hash"], Array<Commit<TNode>>>): Array<Commit<TNode>> {
     const dfs = (commit: Commit<TNode>) => {
       const commitHash = commit.hash;
@@ -57,7 +57,7 @@ class GitamineRendering<TNode> extends LayoutPolicy<TNode> {
     return sortedCommits;
   }
 
-  protected computeColumns(commits: Array<Commit<TNode>>,
+  protected computeColumns<TNode>(commits: Array<Commit<TNode>>,
       children: Map<Commit["hash"], Array<Commit<TNode>>>,
       layout: Layout): void {
     function insertCommit(commitHash: string, j: number, forbiddenIndices: Set<number>) {

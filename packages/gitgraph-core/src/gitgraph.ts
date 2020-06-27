@@ -3,10 +3,9 @@ import { Commit } from "./commit";
 import { Mode } from "./mode";
 import { CompareBranchesOrder } from "./branches-order";
 import { Layout } from "./layout";
-
-import { DefaultRendering } from "./layout-algorithms/default";
 import { CompactRendering } from "./layout-algorithms/compact";
-import { GitamineRendering } from "./layout-algorithms/gitamine";
+import { DefaultRendering } from "./layout-algorithms/default";
+import { LayoutPolicy } from "./layout-policy";
 
 import {
   Template,
@@ -18,7 +17,6 @@ import { Refs } from "./refs";
 import { BranchesPathsCalculator, BranchesPaths } from "./branches-paths";
 import { booleanOptionOr, numberOptionOr } from "./utils";
 import { Orientation } from "./orientation";
-import { LayoutType } from "./layout-type";
 import {
   GitgraphUserApi,
   GitgraphBranchOptions,
@@ -30,7 +28,7 @@ export { GitgraphOptions, RenderedData, GitgraphCore };
 interface GitgraphOptions {
   template?: TemplateName | Template;
   orientation?: Orientation;
-  layout?: LayoutType;
+  layout?: LayoutPolicy;
   reverseArrow?: boolean;
   initCommitOffsetX?: number;
   initCommitOffsetY?: number;
@@ -50,7 +48,6 @@ interface RenderedData<TNode> {
 
 class GitgraphCore<TNode = SVGElement> {
   public orientation?: Orientation;
-  public layout?: LayoutType;
   public get isHorizontal(): boolean {
     return (
       this.orientation === Orientation.Horizontal ||
@@ -66,16 +63,11 @@ class GitgraphCore<TNode = SVGElement> {
       this.orientation === Orientation.VerticalReverse
     );
   }
-  public get getLayout(): LayoutType {
-    if (this.layout) {
-      return this.layout;
-    }
-    return LayoutType.Default;
-  }
   public get shouldDisplayCommitMessage(): boolean {
     return !this.isHorizontal && this.mode !== Mode.Compact;
   }
 
+  public layout: LayoutPolicy;
   public reverseArrow: boolean;
   public initCommitOffsetX: number;
   public initCommitOffsetY: number;
@@ -127,7 +119,8 @@ class GitgraphCore<TNode = SVGElement> {
       options.branchLabelOnEveryCommit,
       false,
     );
-    this.layout = options.layout || LayoutType.Default;
+    this.layout = options.layout ||
+      (this.mode === Mode.Compact ? new CompactRendering() : new DefaultRendering());
   }
 
   /**
@@ -440,27 +433,10 @@ class GitgraphCore<TNode = SVGElement> {
   private ComputeLayout(
     commitsWithBranches: Array<Commit<TNode>>,
   ): Layout {
-    if (this.layout == LayoutType.Gitamine) {
-      return new GitamineRendering()
-        .computeLayoutFromCommits(
-          commitsWithBranches,
-          this.template.colors,
-          this.branchesOrderFunction
-        );
-    }
-    if (this.mode == Mode.Compact) {
-      return new CompactRendering()
-        .computeLayoutFromCommits(
-          commitsWithBranches,
-          this.template.colors,
-          this.branchesOrderFunction
-        );
-    }
-    return new DefaultRendering()
-      .computeLayoutFromCommits(
-        commitsWithBranches,
-        this.template.colors,
-        this.branchesOrderFunction
-      );
+    return this.layout.computeLayoutFromCommits(
+      commitsWithBranches,
+      this.template.colors,
+      this.branchesOrderFunction
+    );
   }
 }

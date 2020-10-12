@@ -2,10 +2,10 @@ import { Branch, DELETED_BRANCH_NAME, createDeletedBranch } from "./branch";
 import { Commit } from "./commit";
 import { Mode } from "./mode";
 import { CompareBranchesOrder } from "./branches-order";
-
-import { DefaultRendering } from "./layout-algorithms/default";
-import { CompactRendering } from "./layout-algorithms/compact";
-import { GitamineRendering } from "./layout-algorithms/gitamine";
+import { Layout } from "./layout";
+import { CompactPolicy } from "./layout-policies/compact";
+import { DefaultPolicy } from "./layout-policies/default";
+import { LayoutPolicy } from "./layout-policy";
 
 import {
   Template,
@@ -17,7 +17,6 @@ import { Refs } from "./refs";
 import { BranchesPathsCalculator, BranchesPaths } from "./branches-paths";
 import { booleanOptionOr, numberOptionOr } from "./utils";
 import { Orientation } from "./orientation";
-import { Layout } from "./layout";
 import {
   GitgraphUserApi,
   GitgraphBranchOptions,
@@ -29,7 +28,7 @@ export { GitgraphOptions, RenderedData, GitgraphCore };
 interface GitgraphOptions {
   template?: TemplateName | Template;
   orientation?: Orientation;
-  layout?: Layout;
+  policy?: LayoutPolicy;
   reverseArrow?: boolean;
   initCommitOffsetX?: number;
   initCommitOffsetY?: number;
@@ -49,7 +48,6 @@ interface RenderedData<TNode> {
 
 class GitgraphCore<TNode = SVGElement> {
   public orientation?: Orientation;
-  public layout?: Layout;
   public get isHorizontal(): boolean {
     return (
       this.orientation === Orientation.Horizontal ||
@@ -65,16 +63,11 @@ class GitgraphCore<TNode = SVGElement> {
       this.orientation === Orientation.VerticalReverse
     );
   }
-  public get getLayout(): Layout {
-    if (this.layout) {
-      return this.layout;
-    }
-    return Layout.Default;
-  }
   public get shouldDisplayCommitMessage(): boolean {
     return !this.isHorizontal && this.mode !== Mode.Compact;
   }
 
+  public policy: LayoutPolicy;
   public reverseArrow: boolean;
   public initCommitOffsetX: number;
   public initCommitOffsetY: number;
@@ -126,7 +119,8 @@ class GitgraphCore<TNode = SVGElement> {
       options.branchLabelOnEveryCommit,
       false,
     );
-    this.layout = options.layout || Layout.Default;
+    this.policy = options.policy ||
+      (this.mode === Mode.Compact ? new CompactPolicy() : new DefaultPolicy());
   }
 
   /**
@@ -162,11 +156,11 @@ class GitgraphCore<TNode = SVGElement> {
    * Rendering libraries will use this to implement their rendering strategy.
    */
   public getRenderedData(): RenderedData<TNode> {
-    const commits = this.computeRenderedCommits();
+    const [commits, layout] = this.computeRenderedCommits();
     const branchesPaths = this.computeRenderedBranchesPaths(commits);
     const commitMessagesX = this.computeCommitMessagesX(branchesPaths);
 
-    this.computeBranchesColor(commits, branchesPaths);
+    this.computeBranchesColor(commits, layout, branchesPaths);
 
     return { commits, branchesPaths, commitMessagesX };
   }
@@ -229,22 +223,25 @@ class GitgraphCore<TNode = SVGElement> {
   /**
    * Return commits with data for rendering.
    */
-  private computeRenderedCommits(): Array<Commit<TNode>> {
+  private computeRenderedCommits(): [Array<Commit<TNode>>, Layout] {
     const branches = this.getBranches();
     const commitsWithBranches = this.commits.map((commit) =>
       this.withBranches(branches, commit),
     );
+    const layout = this.policy.computeLayoutFromCommits(
+      commitsWithBranches,
+      this.template.colors,
+      this.branchesOrderFunction
+    );
 
-    const renderedLayout = this.ComputeLayout(commitsWithBranches);
-
-    return (
+    return [
       commitsWithBranches
         .map((commit) => commit.setRefs(this.refs))
-        .map((commit) => this.withPosition(renderedLayout, commit))
+        .map((commit) => this.withPosition(layout, commit))
         // Fallback commit computed color on branch color.
         .map((commit) =>
           commit.withDefaultColor(
-            this.getBranchDefaultColor(renderedLayout, commit.branchToDisplay),
+            this.getBranchDefaultColor(layout, commit.branchToDisplay),
           ),
         )
         // Tags need commit style to be computed (with default color).
@@ -255,8 +252,9 @@ class GitgraphCore<TNode = SVGElement> {
               Object.assign({}, this.tagStyles[name], this.template.tag),
             (name) => this.tagRenders[name],
           ),
-        )
-    );
+        ),
+        layout
+    ];
   }
 
   /**
@@ -285,13 +283,13 @@ class GitgraphCore<TNode = SVGElement> {
    */
   private computeBranchesColor(
     commits: Array<Commit<TNode>>,
+    layout: Layout,
     branchesPaths: BranchesPaths<TNode>,
   ): void {
-    const renderedLayout = this.ComputeLayout(commits);
     Array.from(branchesPaths).forEach(([branch]) => {
       branch.computedColor =
         branch.style.color ||
-        this.getBranchDefaultColor(renderedLayout, branch.name);
+        this.getBranchDefaultColor(layout, branch.name);
     });
   }
 
@@ -362,17 +360,17 @@ class GitgraphCore<TNode = SVGElement> {
   /**
    * Add position to given commit.
    *
-   * @param renderedLayout Computed rows and order of branches
+   * @param layout Computed rows and order of branches
    * @param commit Commit to position
    */
   private withPosition(
-    renderedLayout: DefaultRendering<TNode>,
+    layout: Layout,
     commit: Commit<TNode>,
   ): Commit<TNode> {
-    const row = renderedLayout.getRowOf(commit.hash);
-    const maxRow = renderedLayout.getMaxRow();
+    const row = layout.getRowOf(commit.hash);
+    const maxRow = layout.getMaxRow();
 
-    const order = renderedLayout.getOrder(commit.hash);
+    const order = layout.getOrder(commit.hash);
 
     switch (this.orientation) {
       default:
@@ -408,14 +406,14 @@ class GitgraphCore<TNode = SVGElement> {
   /**
    * Return the default color for given branch.
    *
-   * @param renderedLayout Computed rows order of branches
+   * @param layout Computed rows order of branches
    * @param branchName Name of the branch
    */
   private getBranchDefaultColor(
-    renderedLayout: DefaultRendering<TNode>,
+    layout: Layout,
     branchName: Branch["name"],
   ): string {
-    return renderedLayout.getColorOf(branchName);
+    return layout.getColorOf(branchName);
   }
 
   /**
@@ -431,32 +429,5 @@ class GitgraphCore<TNode = SVGElement> {
     this.nextTimeoutId = window.setTimeout(() => {
       this.listeners.forEach((listener) => listener(this.getRenderedData()));
     }, 0);
-  }
-
-  /**
-   * Return applies appropriate rendering algorithm depending on the options
-   */
-  private ComputeLayout(
-    commitsWithBranches: Array<Commit<TNode>>,
-  ): DefaultRendering<TNode> {
-    if (this.layout == Layout.Gitamine) {
-      return new GitamineRendering<TNode>(
-        commitsWithBranches,
-        this.template.colors,
-        this.branchesOrderFunction,
-      );
-    }
-    if (this.mode == Mode.Compact) {
-      return new CompactRendering<TNode>(
-        commitsWithBranches,
-        this.template.colors,
-        this.branchesOrderFunction,
-      );
-    }
-    return new DefaultRendering<TNode>(
-      commitsWithBranches,
-      this.template.colors,
-      this.branchesOrderFunction,
-    );
   }
 }

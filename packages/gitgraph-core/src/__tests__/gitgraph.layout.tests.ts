@@ -1,22 +1,23 @@
 import { GitgraphCore } from "../gitgraph";
-import { Layout } from "../layout";
+import { DefaultPolicy } from "../layout-policies/default";
+import { GitaminePolicy } from "../layout-policies/gitamine";
 
 describe("Gitgraph Layout", () => {
   it("should tell it's default layout if not set", () => {
     const gitgraph = new GitgraphCore();
 
-    expect(gitgraph.getLayout).toBe(Layout.Default);
+    expect(gitgraph.policy).toBeInstanceOf(DefaultPolicy);
   });
 
   it("should not re-use any columns for default layout", () => {
     const core = new GitgraphCore({
-      layout: Layout.Default,
+      policy: new DefaultPolicy(),
     });
   });
 
   it("should not recognize the Gitamine layout is set", () => {
     const core = new GitgraphCore({
-      layout: Layout.Gitamine,
+      policy: new GitaminePolicy(),
     });
   });
 });
